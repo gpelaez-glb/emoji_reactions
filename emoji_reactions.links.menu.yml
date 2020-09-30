@@ -1,0 +1,6 @@
+likeit.settings_form:
+  title: 'Emoji Reactions!'
+  route_name: emoji_reactions.settings_form
+  description: 'Emoji reactions module configurations.'
+  parent: system.admin_config_ui
+  weight: 99

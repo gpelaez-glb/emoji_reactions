@@ -1,0 +1,202 @@
+<?php
+
+/**
+ * @file
+ * Contains like.module.
+ */
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\views\Plugin\views\PluginBase;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_help().
+ */
+function emoji_reactions_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the like module.
+    case 'help.page.like':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Like Any Content') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function emoji_reactions_entity_extra_field_info() {
+  $extra = [];
+
+  $config = \Drupal::config('emoji_reactions.settings');
+  $target_entities = $config->get('target_entities');
+
+  if (!empty($target_entities)) {
+    foreach ($target_entities as $key => $entity) {
+      $target_arr = explode(':', $key);
+      $entity_type = $target_arr[0];
+      $entity_bundle = $target_arr[1];
+      $extra[$entity_type][$entity_bundle]['display']['emoji_reactions'] = [
+        'label' => t('Emoji Reactions!'),
+        'description' => t('Custom reactions link.'),
+        'weight' => 0,
+        'visible' => FALSE,
+        'render_class' => 'Drupal\emoji_reactions\EmojiReactionsExtrafieldRenderer',
+      ];
+    }
+  }
+
+  return $extra;
+}
+
+/**
+ * Implements hook_entity_view().
+ */
+function emoji_reactions_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  // Don't show on previews.
+  if ($entity->isNew()) {
+    return;
+  }
+
+  $build['emoji_reactions'] = \Drupal::service('emoji_reactions.manager')->getLinksByEntity($entity);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function emoji_reactions_theme() {
+  return [
+    'emoji' => [
+      'variables' => [
+        'reaction' => '',
+      ],
+      'render element' => 'children',
+    ],
+    'reaction_link' => [
+      'content' => [
+        'link' => NULL,
+        'view' => NULL,
+        'message' => NULL,
+      ],
+      'reaction' => '',
+      'action' => '',
+      'count' => '',
+      'attributes' => [
+        'class' => ['likeit', 'likeit-wrapper'],
+      ],
+    ],
+  ];
+}
+
+/**
+ *
+ */
+function emoji_reactions_node_view_alter(array &$build, EntityInterface $node, EntityViewDisplayInterface $display) {
+
+  $build['body'][0]['#text'] = 'test by ajay';
+
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function emoji_reactions_preprocess_node(&$variables) {
+  // dpm($variables);
+  // die();
+}
+
+/**
+ * Remove all emoji_reaction entities from user account.
+ *
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *   User account.
+ */
+function emoji_reactions_remove_from_user(AccountInterface $account) {
+  $storage = \Drupal::entityTypeManager()->getStorage('emoji_reaction');
+
+  $likes = $storage->getQuery()
+    ->condition('user_id', $account->id())
+    ->execute();
+
+  if (!empty($likes)) {
+    $action = \Drupal::config('emoji_reaction.settings')
+      ->get('after_owner_deletion');
+    $entities = $storage->loadMultiple($likes);
+
+    // Set owner to anonymous.
+    if ($action === 'set_to_anonymous') {
+      /** @var \Drupal\emoji_reactions\Entity\EmojiReactionInterface $emoji_reaction */
+      foreach ($entities as $emoji_reaction) {
+        $emoji_reaction->setOwnerId(0)
+          ->save();
+      }
+    }
+    else {
+      // Delete emoji_reaction content.
+      $storage->delete($entities);
+    }
+  }
+}
+
+/**
+ * Implements hook_user_cancel().
+ */
+function emoji_reactions_user_cancel($edit, $account, $method) {
+  emoji_reactions_remove_from_user($account);
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+function emoji_reactions_user_delete(AccountInterface $account) {
+  emoji_reactions_remove_from_user($account);
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function emoji_reactions_entity_delete(EntityInterface $entity) {
+  $type = $entity->getEntityTypeId();
+  if ($type !== 'emoji_reaction') {
+    $id = $entity->id();
+
+    // Remove emoji_reaction entity content.
+    emoji_reactions_remove_from_entity($type, $id);
+  }
+}
+
+/**
+ * Delete EmojiReaction entities with target entity deletion.
+ *
+ * @param string $type
+ *   Target entity type.
+ * @param string $id
+ *   Target entity id.
+ */
+function emoji_reactions_remove_from_entity($type, $id) {
+  $storage = \Drupal::entityTypeManager()->getStorage('emoji_reaction');
+  $likes = $storage->getQuery()
+    ->condition('target_entity_type', $type)
+    ->condition('target_entity_id', $id)
+    ->execute();
+
+  $entities = $storage->loadMultiple($likes);
+  $storage->delete($entities);
+}
+
+/**
+ * Implements hook_views_query_substitutions().
+ */
+function emoji_reactions_query_substitutions(ViewExecutable $view) {
+  $substitutions = [
+    '***CURRENT_SESSION_ID***' => emoji_reactions_get_cookie(),
+  ] + PluginBase::queryLanguageSubstitutions();
+
+  return $substitutions;
+}

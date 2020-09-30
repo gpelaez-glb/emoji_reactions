@@ -1,0 +1,10 @@
+animated_emoji:
+  css:
+    theme:
+      css/animated_emoji.css: {}
+
+reactions:
+  js:
+    js/animated_emoji.js:{}
+  dependencies:
+    - core/drupal.ajax

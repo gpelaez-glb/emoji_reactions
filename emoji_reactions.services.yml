@@ -1,0 +1,13 @@
+services:
+  emoji_reactions.csrf_token:
+    class: Drupal\emoji_reactions\Access\CsrfTokenGenerator
+    arguments: 
+      - '@private_key'
+      - '@config.factory'
+      - '@settings'
+  emoji_reactions.manager:
+    class: Drupal\emoji_reactions\Service\EmojiReactionsManager
+    arguments: 
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@emoji_reactions.csrf_token'

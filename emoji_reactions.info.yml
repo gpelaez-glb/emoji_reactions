@@ -1,0 +1,8 @@
+name: 'like'
+type: module
+description: 'Like Any Content'
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: 'Custom'
+dependencies:
+ - extrafield_views_integration:extrafield_views_integration
