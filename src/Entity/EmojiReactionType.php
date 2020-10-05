@@ -62,6 +62,37 @@ class EmojiReactionType extends ContentEntityBase {
   }
 
   /**
+   * Gets reaction type name.
+   */
+  public function getName() {
+    return $this->get('name')->value;
+  }
+
+  /**
+   * Gets reaction type icon.
+   *
+   * @return array
+   *   Reaction type icon renderable array.
+   */
+  public function getReactionTypeIcon() {
+    $use_animated_icon = $this->get('use_animated_icon')->value;
+    if ($use_animated_icon) {
+      // TODO: Build renderable array for animated emoji.
+      return [
+        '#theme' => 'reaction_emoji',
+        '#reaction' => $this->get('animated_icon')->value,
+        '#attached' => [
+          'library' => 'emoji_reactions/animated_emoji',
+        ],
+      ];
+    }
+    else {
+      // TODO: Build a renderable array for image field.
+    }
+    return [];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -85,6 +116,39 @@ class EmojiReactionType extends ContentEntityBase {
         'text_processing' => 0,
       ])
       ->addConstraint('UniqueField', []);
+
+    $fields['use_animated_icon'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Use animated icon for reaction.'))
+      ->setDescription(t('Use animated icon on reaction button.'))
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'settings' => [
+          'display_label' => TRUE,
+        ],
+        'weight' => 0,
+      ])
+      ->setDefaultValue(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['animated_icon'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Reaction type animated icon.'))
+      ->setDescription(t('The reaction type animated icon.'))
+      ->setSettings([
+        'allowed_values' => array_combine(EMOJI_REACTIONS_DEFAULTS, EMOJI_REACTIONS_DEFAULTS),
+      ])
+      ->setDefaultValue(EMOJI_REACTIONS_DEFAULTS[0])
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => -2,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => -2,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $$fields['image'] = BaseFieldDefinition::create('image')
       ->setLabel(t('Image'))

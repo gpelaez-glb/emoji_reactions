@@ -85,6 +85,19 @@ interface EmojiReactionInterface extends ContentEntityInterface, EntityChangedIn
   public function getType();
 
   /**
+   * Sets the reaction type name.
+   *
+   * @param string $type_name
+   *   The name of the reaction performed.
+   *
+   * @return \Drupal\emoji_reactions\Entity\EmojiReactionInterface
+   *   The called EmojiReaction entity.
+   *
+   * @throws \InvalidArgumentException
+   */
+  public function setTypeName(string $type_name);
+
+  /**
    * Gets the EmojiReaction's type name.
    *
    * @return string

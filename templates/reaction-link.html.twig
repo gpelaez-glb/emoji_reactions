@@ -1,0 +1,13 @@
+<!-- Add you custom twig html here -->
+
+{%
+  set classes = [
+    'emoji-reaction__link',
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+  {% if content %}
+    {{ content }}
+  {% endif %}
+</div>
+

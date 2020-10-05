@@ -89,7 +89,9 @@ class CsrfTokenGenerator {
       return FALSE;
     }
 
-    return Crypt::hashEquals($this->computeToken($seed, $value), $token);
+    return hash_equals($this->computeToken($seed, $value), $token);
+
+    // return Crypt::hashEquals($this->computeToken($seed, $value), $token);
   }
 
   /**

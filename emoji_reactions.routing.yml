@@ -9,7 +9,7 @@ emoji_reactions.settings_form:
     _admin_route: TRUE
 
 emoji_reactions.react:
-  path: 'emoji_reactions/{reaction}/react/{entity}/{id}/{html_id}/{token}'
+  path: 'emoji_reactions/{reaction_name}/react/{target}/{id}/{html_id}/{token}'
   defaults:
     _controller: '\Drupal\emoji_reactions\Controller\EmojiReactionsController::react'
     _title: 'React'
@@ -17,7 +17,7 @@ emoji_reactions.react:
     _permission: 'emoji_reactions_react'
 
 emoji_reactions.remove:
-  path: 'emoji_reactions/{reaction}/remove/{entity}/{id}/{html_id}/{token}'
+  path: 'emoji_reactions/{reaction_name}/remove/{target}/{id}/{html_id}/{token}'
   defaults:
     _controller: '\Drupal\emoji_reactions\Controller\EmojiReactionsController::remove'
     _title: 'Remove Reaction'

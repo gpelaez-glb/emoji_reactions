@@ -1,7 +1,8 @@
 .emoji {
   width: 120px;
   height: 120px;
-  margin: 15px 15px 40px;
+  margin: 0;
+  padding: 0;
   background: #ffda6a;
   display: inline-block;
   border-radius: 50%;
@@ -14,6 +15,7 @@
   width: 60px;
   left: calc(50% - 30px);
   color: #8a8a8a;
+  visibility: hidden;
 }
 
 .emoji__face,
@@ -979,4 +981,26 @@
     height: 6px;
     bottom: 25px;
   }
+}
+
+
+.emoji.paused * {
+  animation-play-state: paused;
+}
+
+.emoji.paused:hover * {
+  animation-play-state: running;
+}
+
+.emoji-wrapper.emoji-shrink {
+  width: 36px;
+  height: 36px;
+  margin: 10px 5px;
+}
+
+.emoji-wrapper.emoji-shrink .emoji {
+  transform: scale3d(0.3, 0.3, 0.3);
+  position: relative;
+  top: -42px;
+  left: -42px;
 }

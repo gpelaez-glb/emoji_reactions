@@ -2,12 +2,18 @@
 
 namespace Drupal\emoji_reactions\Service;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityBase;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Url;
 use Drupal\emoji_reactions\Access\CsrfTokenGenerator;
+use Drupal\emoji_reactions\Controller\EmojiReactionsController;
+use Drupal\emoji_reactions\Entity\EmojiReaction;
+use Drupal\emoji_reactions\Entity\EmojiReactionType;
+use Drupal\user\UserInterface;
 
 /**
  * Class EmojiReactionsManager.
@@ -44,7 +50,7 @@ class EmojiReactionsManager {
   public function __construct(AccountProxyInterface $account, EntityTypeManagerInterface $entity_type_manager, CsrfTokenGenerator $csrf_token_generator) {
     $this->account = $account;
     $this->entityTypeManager = $entity_type_manager;
-    $this->CsrfTokenGenerator = $csrf_token_generator;
+    $this->csrfTokenGenerator = $csrf_token_generator;
   }
 
   /**
@@ -67,54 +73,141 @@ class EmojiReactionsManager {
 
   /**
    * Get emoji reactions links by entity.
+   *
+   * @param \Drupal\Core\Entity\EntityBase $entity
+   *   The content entity to build reaction links.
+   *
+   * @return array
+   *   Emoji reactions links render array.
    */
   public function getLinksByEntity(EntityBase $entity) {
+    $config = \Drupal::config('emoji_reactions.settings');
+    $target_entities = $config->get('target_entities');
+    $emoji_reactions = [];
 
-    $target = $entity->getEntityTypeId() . ':' . $entity->bundle();
-    $emoji_reactions = $this->getLinks($target, $entity->id());
+    if (!empty($target_entities)) {
+      $target = $entity->getEntityTypeId() . ':' . $entity->bundle();
+      if (in_array($target, $target_entities)) {
+        /** @var \Drupal\emoji_reactions\Entity\EmojiReactionType[] $types */
+        $types = $this->entityTypeManager->getStorage('emoji_reaction_type')
+          ->loadMultiple();
+        foreach ($types as $type) {
+          $emoji_reactions[] = $this->buildReactionLink($entity, $type);
+        }
+      }
+    }
 
-    return $emoji_reactions;
+    return [
+      '#theme' => 'reactions_button',
+      '#reactions' =>  $emoji_reactions,
+    ];
   }
 
   /**
-   * Get link to like/unlike or count info.
    *
-   * @param string $target
-   *   Target entity:bundle.
-   * @param string $id
-   *   Target bundle id.
-   *
-   * @return array
-   *   Render or empty array.
    */
-  public function getLinks($target, $id) {
+  public function getCount(EntityBase $entity, EmojiReactionType $reaction_type = NULL) {
+    $storage = \Drupal::entityTypeManager()->getStorage('emoji_reaction');
 
-    $config = \Drupal::config('emoji_reactions.settings');
-    $target_entities = $config->get('target_entities');
+    $query = $storage->getQuery()
+      ->condition('target_entity_id', $entity->id());
 
-    if (empty($target_entities)) {
-      return [];
+    // If reaction type name is given, add reaction to the query.
+    if (!empty($reaction_type)) {
+      $query->condition('reaction_type_id', $reaction_type->id());
     }
+
+    return $query->count()->execute();
+
+  }
+
+  /**
+   *
+   */
+  public function buildReactionLink(EntityBase $entity, EmojiReactionType $reaction_type) {
+    $current_reaction = $this->check($entity, /* NULL, TODO $reaction_type */);
+    $action = $current_reaction == FALSE ? 'react' : 'remove';
+
+    $title = $reaction_type->getName();
+
+    $target = $entity->getEntityTypeId() . ':' . $entity->bundle();
+    $html_id = uniqid('em-reaction-' . $entity->id());
+    $html_id = Html::getId($html_id);
+
+    $url = Url::fromRoute('emoji_reactions.' . $action, [
+      'reaction_name' => $reaction_type->getName(),
+      'target' => $target,
+      'id' => $entity->id(),
+      'html_id' => $html_id,
+      'token' => $this->csrfTokenGenerator->get($html_id),
+    ]);
+
+    $link = [
+      '#type' => 'link',
+      '#title' => $title,
+      '#url' => $url,
+    ];
+    $link['#attributes']['title'] = $title;
+    $link['#attributes']['class'] = ['use-ajax', 'emoji-reaction'];
+    $link['#attributes']['id'] = $html_id;
+
+    if ($action == 'remove') {
+      $link['#attributes']['class'][] = 'active';
+    }
+
+    if (EmojiReactionsController::checkAccess('view', $this->account)) {
+      $count = $this->getCount($entity, $reaction_type);
+
+      $link_content = [];
+      $link_content[] = $reaction_type->getReactionTypeIcon();
+      $link_content[] = [
+        '#type' => 'markup',
+        '#markup' => '<span class="emoji-reaction--count">' . $count . '</span> ' .
+        '<span class="emoji-reaction--title">' . $title . '</span>',
+      ];
+
+      $link['#title'] = render($link_content);
+    }
+    $icon = $reaction_type->getReactionTypeIcon();
+    return [
+      '#theme' => 'reaction_link',
+      '#content' => [
+        'link' => $link,
+      ],
+      '#reaction' => $reaction_type,
+      '#action' => $action,
+      '#count' => $count,
+    ];
   }
 
   /**
    * Set emoji reaction session cookie.
    */
   public function setCookie($session_id) {
-    setcookie('likeit_session', $session_id, time() + (86400 * 7), '/');
+    setcookie('reactions_session', $session_id, time() + (86400 * 7), '/');
 
-    // Likeit uses Ajax and page isn't reloading.
+    // EmojiReactions uses Ajax and page isn't reloading.
     // That is why we manually set $_COOKIE
     // because once the cookies have been set,
     // they can be accessed only on the next page load.
-    $_COOKIE['likeit_session'] = $session_id;
+    $_COOKIE['reactions_session'] = $session_id;
+  }
+
+  /**
+   * Checks if token matches with provided dom element id.
+   *
+   * @return bool
+   *   Returns true if token is valid or false otherwise.
+   */
+  public function validateToken($token, $html_id) {
+    return $this->csrfTokenGenerator->validate($token, $html_id);
   }
 
   /**
    * Get Emoji Reaction session cookie.
    */
   public function getCookie() {
-    return $_COOKIE['likeit_session'] ?? FALSE;
+    return $_COOKIE['reactions_session'] ?? FALSE;
   }
 
   /**
@@ -123,15 +216,17 @@ class EmojiReactionsManager {
    * @void
    */
   public function removeCookie() {
-    setcookie('likeit_session', '', time() - 3600);
+    setcookie('reactions_session', '', time() - 3600);
   }
 
   /**
    * Get current user session id.
    */
-  public function getUserSessionId() {
+  public function getUserSessionId(AccountInterface $user = NULL) {
     $session_id = uniqid();
-    $user = \Drupal::currentUser();
+    if (empty($user)) {
+      $user = $this->account;
+    }
     if ($user->isAnonymous()) {
       $cookie = $this->getCookie();
       if (!empty($cookie)) {
@@ -146,21 +241,40 @@ class EmojiReactionsManager {
   }
 
   /**
+   * Get the reaction type id from the name.
+   *
+   * @param string
+   *   Reaction type name.
+   *
+   * @return string|bool
+   *   The reaction type id or false if no reaction_type found.
+   */
+  public function getReactionTypeIdFromName(string $type_name) {
+    $type_ids = $this->entityTypeManager
+      ->getStorage('emoji_reaction_type')
+      ->getQuery()
+      ->condition('name', $type_name)
+      ->execute();
+
+    return reset($type_ids);
+  }
+
+  /**
    * Check if there is an existing reaction for entity and user.
    *
    * @return \Drupal\emoji_reactions\Entity\EmojiReactionInterface|bool
    *   Returns the current emoji reaction entity or FALSE if not setted.
    */
-  public function check($entity, AccountInterface $account = NULL) {
-    if (empty($account)) {
-      $account = \Drupal::currentUser();
-    }
-
+  public function check($entity, AccountInterface $account = NULL, EmojiReactionType $reaction_type = NULL) {
     if (!$entity) {
       return FALSE;
     }
 
-    $storage = $this->entityTypeManager->getStorage('emoji_reactions');
+    if (empty($account)) {
+      $account = $this->account;
+    }
+
+    $storage = $this->entityTypeManager->getStorage('emoji_reaction');
     $query = $storage->getQuery()
       ->condition('target_entity_type', $entity->getEntityTypeId())
       ->condition('target_entity_id', $entity->id())
@@ -175,10 +289,15 @@ class EmojiReactionsManager {
       $query = $query->condition('session_id', $cookie);
     }
 
-    $likes = $query->execute();
+    // Set reaction type query parameter if specified.
+    if (!empty($reaction_type)) {
+      $query->condition('reaction_type_id', $reaction_type->id());
+    }
 
-    if (!empty($likes)) {
-      return reset($likes);
+    $reactions = $query->execute();
+
+    if (!empty($reactions)) {
+      return $storage->load(reset($reactions));
     }
 
     return FALSE;
@@ -188,37 +307,92 @@ class EmojiReactionsManager {
    * Set reaction.
    */
   public function setReaction(string $reaction_type, EntityInterface $entity, AccountInterface $account = NULL) {
-    /* TODO:
-     * - Check if a reaction for entity and account already exists.
-     * - If reaction exists and reaction is different, set new reaction type.
-     * - If no existing reaction, create a new one.
-     */
 
     if (empty($account)) {
-      $account = \Drupal::currentUser();
+      $account = $this->account;
     }
 
-    $existing_reaction = $this->check($entity, $account);
+    $session_id = $this->getUserSessionId($account);
+    $reaction = $this->check($entity, $account);
 
+    // if ($reaction === FALSE) {
+      // Create new reaction.
+      $values = [
+        'user_id' => $account->id(),
+        'target_entity_type' => $entity->getEntityTypeId(),
+        'target_entity_id' => $entity->id(),
+        'session_id' => $session_id,
+      ];
+
+      /** @var EmojiReaction $reaction */
+      $reaction = $this->entityTypeManager
+        ->getStorage('emoji_reaction')
+        ->create($values);
+      
+      $reaction->setTypeName($reaction_type);
+      
+      $reaction->save();
+    // }
+    // elseif ($reaction->getTypeName() !== $reaction_type) {
+    //   $reaction->setTypeName($reaction_type);
+    //   $reaction->save();
+    // }
+    // else {
+    //   // If reaction of type $reaction_type already exists, do nothing.
+    // }
+
+    return $reaction;
+
+  }
+
+  /**
+   * Removes a reaction from an entity.
+   */
+  public function removeReaction(string $type_name, EntityInterface $entity, AccountInterface $account = NULL) {
+    if (empty($account)) {
+      $account = $this->account;
+    }
+
+    $type = null;
+
+    /** @var \Drupal\emoji_reactions\Entity\EmojiReactionType[] $types */
+    $types = $this->entityTypeManager->getStorage('emoji_reaction_type')
+      ->loadByProperties([
+        'name' => $type_name,
+      ]);
+    
+    if (!empty($types)) {
+      $type = reset($types);
+    }
+
+    $reaction = $this->check($entity, $account, $type);
+
+    if ($reaction !== FALSE) {
+      $reaction->delete();
+    }
+    return $reaction;
   }
 
   /**
    * Remove reaction.
    */
-  public function removeReactionFromEntity(EntityInterface $entity, AccountInterface $account = NULL) {
-    /* TODO:
-     * - Check if a reaction for entity and account already exists.
-     * - If reaction exists, remove it.
-     */
-    $storage = $this->entityTypeManager->getStorage('emoji_reactions');
-    $type = $entity->getEntityTypeId();
-    $likes = $storage->getQuery()
-      ->condition('target_entity_type', $type)
-      ->condition('user_id', $account->id())
-      ->condition('target_entity_id', $id)
-      ->execute();
+  public function removeAllFromEntity(EntityInterface $entity, AccountInterface $account = NULL) {
 
-    $entities = $storage->loadMultiple($likes);
+    // Get entity related reactions.
+    $storage = $this->entityTypeManager->getStorage('emoji_reaction');
+    $type = $entity->getEntityTypeId();
+    $query = $storage->getQuery()
+      ->condition('target_entity_type', $type)
+      ->condition('target_entity_id', $entity->id());
+
+    // Is user is specified, limit to user's reaction.
+    if (!empty($account)) {
+      $query->condition('user_id', $account->id());
+    }
+    $reactions = $query->execute();
+    $entities = $storage->loadMultiple($reactions);
+
+    // Remove all entity reactions.
     $storage->delete($entities);
   }
 
@@ -226,27 +400,30 @@ class EmojiReactionsManager {
    *
    */
   public function removeAllFromUser(AccountInterface $account) {
-    $storage = $this->entityTypeManager->getStorage('emoji_reactions');
-    $likes = $storage->getQuery()
+
+    // Find all emoji_reactions from a user.
+    $storage = $this->entityTypeManager->getStorage('emoji_reaction');
+    $reactions = $storage->getQuery()
       ->condition('user_id', $account->id())
       ->execute();
 
-    if (!empty($likes)) {
+    if (!empty($reactions)) {
       $action = \Drupal::config('emoji_reactions.settings')
         ->get('after_owner_deletion');
-      $entities = $storage->loadMultiple($likes);
+
+      /** @var \Drupal\emoji_reactions\Entity\EmojiReactionInterface[] $reactions */
+      $reactions = $storage->loadMultiple($reactions);
 
       // Set owner to anonymous.
       if ($action == 'set_to_anonymous') {
-        /** @var \Drupal\emoji_reactions\Entity\EmojiReactionInterface $emoji_reaction */
-        foreach ($entities as $emoji_reaction) {
-          $emoji_reaction->setOwnerId(0)
+        foreach ($reactions as $reaction) {
+          $reaction->setOwnerId(0)
             ->save();
         }
       }
       else {
-        // Delete Likeit content.
-        $storage->delete($entities);
+        // Delete all user's reactions.
+        $storage->delete($reactions);
       }
     }
   }

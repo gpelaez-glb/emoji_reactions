@@ -1,0 +1,11 @@
+emoji_reactions_react:
+  title: 'React to the content'
+  description: 'Allow user react to the content.'
+
+emoji_reactions_remove:
+  title: 'Remove reaction to the content'
+  description: 'Allow user remove a reaction to the content.'
+
+emoji_reactions_view:
+  title: 'View content reactions'
+  description: 'Allow user view content reactions.'

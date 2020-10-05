@@ -1,0 +1,17 @@
+{%
+  set classes = [
+    'emoji-reactions',
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+  {% if reactions %}
+  <a class="react-button dropdown-toggle">
+    Add reaction
+  </a>
+  <ul class="dropdown-menu">
+  {% for reaction in reactions %}
+    <li> {{ reaction }} </li>
+  {% endfor %}
+  </ul>
+  {% endif %}
+</div>

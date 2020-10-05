@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\like\Functional;
+namespace Drupal\Tests\emoji_reactions\Functional;
 
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
@@ -8,7 +8,7 @@ use Drupal\Tests\BrowserTestBase;
 /**
  * Simple test to ensure that main page loads with module enabled.
  *
- * @group like
+ * @group reactions
  */
 class LoadTest extends BrowserTestBase {
 
@@ -17,7 +17,7 @@ class LoadTest extends BrowserTestBase {
    *
    * @var array
    */
-  public static $modules = ['like'];
+  public static $modules = ['emoji_reactions'];
 
   /**
    * A user with permission to administer site configuration.
@@ -40,7 +40,14 @@ class LoadTest extends BrowserTestBase {
    */
   public function testLoad() {
     $this->drupalGet(Url::fromRoute('<front>'));
-    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->assert(TRUE, '');
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public function assertSession($name = NULL) {
+    return parent::assertSession($name);
   }
 
 }

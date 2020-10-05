@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Contains install hooks for emoji_reactions module.
+ */
+
+use Drupal\Component\Utility\Crypt;
+
+/**
+ * Implements hook_install().
+ */
+function emoji_reactions_install() {
+  $config = \Drupal::service('config.factory')
+    ->getEditable('emoji_reactions.settings');
+
+  // Set token seed by default.
+  $config
+    ->set('token_seed', Crypt::randomBytesBase64())
+    ->save();
+}

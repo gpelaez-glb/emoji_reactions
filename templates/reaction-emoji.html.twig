@@ -1,0 +1,76 @@
+{#
+/**
+ * @file
+ * Default theme implementation for emoji_reactions.
+ *
+ * Available variables:
+ * - content: Reaction
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_reaction_emoji()
+ *
+ * @ingroup themeable
+ */
+#}
+
+
+{%
+  set classes = [
+    'emoji-wrapper',
+    'emoji-shrink',
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+    <div class="emoji  emoji--{{ reaction }} {{ animate ? '' : 'paused' }}">
+
+    {% if reaction == "angry" %}
+    <div class="emoji__face">
+        <div class="emoji__eyebrows"></div>
+        <div class="emoji__eyes"></div>
+        <div class="emoji__mouth"></div>
+
+    </div>
+    {% elseif reaction == "haha" %}
+    <div class="emoji__face">
+        <div class="emoji__eyes"></div>
+        <div class="emoji__mouth">
+            <div class="emoji__tongue"></div>
+        </div>
+    </div>
+
+    {% elseif reaction == "like" %}
+    <div class="emoji__hand">
+        <div class="emoji__thumb"></div>
+    </div>
+
+    {% elseif reaction == "love" %}
+        <div class="emoji__heart"></div>
+        
+    {% elseif reaction == "sad" %}
+        <div class="emoji__face">
+            <div class="emoji__eyebrows"></div>
+            <div class="emoji__eyes"></div>
+            <div class="emoji__mouth"></div>
+        </div>
+
+    {% elseif reaction == "wow" %}
+        <div class="emoji__face">
+            <div class="emoji__eyebrows"></div>
+            <div class="emoji__eyes"></div>
+            <div class="emoji__mouth"></div>
+        </div>
+    {% elseif reaction == "yay" %}
+        <div class="emoji__face">
+            <div class="emoji__eyebrows"></div>
+            <div class="emoji__mouth"></div>
+        </div>
+
+    {% else %}
+    <div class="emoji__face">
+        <span class="emoji__reaction-name">
+            {{ reaction }}
+        </span>
+    </div>
+    {% endif %}
+    </div>
+</div>

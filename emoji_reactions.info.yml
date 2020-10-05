@@ -1,6 +1,6 @@
-name: 'like'
+name: 'Emoji reactions'
 type: module
-description: 'Like Any Content'
+description: 'React to any Content'
 core: 8.x
 core_version_requirement: ^8 || ^9
 package: 'Custom'

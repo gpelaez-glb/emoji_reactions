@@ -8,24 +8,15 @@ use Drupal\extrafield_views_integration\lib\ExtrafieldRenderClassInterface;
 /**
  *
  */
-class EmojiReactionsExtrafieldRenderer implements ExtrafieldRenderClassInterface {
+class EmojiReactionsExtrafieldRender implements ExtrafieldRenderClassInterface {
 
   /**
    * @inheritDoc
    */
   public static function render(EntityBase $entity) {
-    $config = \Drupal::config('emoji_reactions.settings');
-    $target_entities = $config->get('target_entities');
-    $emoji_reactions = '';
-
-    if (!empty($target_entities)) {
-      $target = $entity->getEntityTypeId() . ':' . $entity->bundle();
-      if (in_array($target, $target_entities)) {
-        $emoji_reactions = emoji_reactions_get_link($target, $entity->id());
-      }
-    }
-
-    return $emoji_reactions;
+    /** @var EmojiReactionsManager $emoji_reactions_manager */
+    $emoji_reactions_manager = \Drupal::service('emoji_reactions.manager');
+    return $emoji_reactions_manager->getLinksByEntity($entity);
   }
 
 }

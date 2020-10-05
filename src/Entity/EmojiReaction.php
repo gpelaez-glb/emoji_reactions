@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\user\UserInterface;
+use InvalidArgumentException;
 
 /**
  * Defines the Emoji Reaction entity.
@@ -41,6 +42,9 @@ class EmojiReaction extends ContentEntityBase implements EmojiReactionInterface 
     if (isset($values['target_entity_id'])) {
       $values['target_entity'] = $values['target_entity_id'];
     }
+    if (isset($values['reaction_type'])) {
+      $values['emoji_reaction_type'] = $values['reaction_type'];
+    }
     parent::__construct($values, $entity_type, $bundle, $translations);
   }
 
@@ -50,9 +54,6 @@ class EmojiReaction extends ContentEntityBase implements EmojiReactionInterface 
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
     parent::preCreate($storage_controller, $values);
     $values += ['user_id' => \Drupal::currentUser()->id()];
-    if (!isset($values['reaction_type'])) {
-      $values['reaction_type'] = 'like';
-    }
   }
 
   /**
@@ -161,6 +162,27 @@ class EmojiReaction extends ContentEntityBase implements EmojiReactionInterface 
       return '';
     }
     return $this->get('name')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTypeName(string $type_name) {
+    $type_ids = $this->entityTypeManager()
+      ->getStorage('emoji_reaction_type')
+      ->getQuery()
+      ->condition('name', $type_name)
+      ->execute();
+
+    if (empty($type_ids)) {
+      throw new InvalidArgumentException(
+        t('Invalid reaction type name: "%type_name"', [
+          '%type_name' => $type_name,
+        ]
+      ));
+    }
+    $this->set('reaction_type_id', reset($type_ids));
+    return $this;
   }
 
   /**

@@ -1,4 +1,4 @@
-likeit.settings_form:
+emoji_reactions.settings_form:
   title: 'Emoji Reactions!'
   route_name: emoji_reactions.settings_form
   description: 'Emoji reactions module configurations.'

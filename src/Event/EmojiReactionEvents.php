@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\emoji_reactions\Entity;
+namespace Drupal\emoji_reactions\Event;
 
 /**
- *
+ * EmojiReactionEvents class.
  */
 final class EmojiReactionEvents {
 
