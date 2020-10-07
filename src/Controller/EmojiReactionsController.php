@@ -3,6 +3,7 @@
 namespace Drupal\emoji_reactions\Controller;
 
 use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\emoji_reactions\Event\EmojiReactionEvent;
@@ -41,7 +42,7 @@ class EmojiReactionsController extends ControllerBase {
   /**
    * EmojiReactionsController constructor.
    *
-   * @param \Drupal\emoji_reactions\Service\EmojiReactionsManager $emojiReactionsManager
+   * @param \Drupal\emoji_reactions\Service\EmojiReactionsManager $er_manager
    *   The the custom token generator.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
@@ -73,10 +74,10 @@ class EmojiReactionsController extends ControllerBase {
   }
 
   /**
-   *
+   * React to an entity.
    */
   public function react($reaction_name, $target, $id, $html_id, $token) {
-    
+
     // Validate provided token.
     if ($this->validateToken($token, $html_id)) {
 
@@ -87,24 +88,22 @@ class EmojiReactionsController extends ControllerBase {
       // Perform reaction.
       $reaction_entity = $this->emojiReactionsManager->setReaction($reaction_name, $entity);
 
-      // Create a react/remove event.
       $event = new EmojiReactionEvent($entity, $reaction_entity->getType(), $reaction_entity->getOwner());
 
       // Use the event dispatcher service to notify any event subscribers.
       $this->eventDispatcher->dispatch(EmojiReactionEvents::REACT, $event);
     }
 
-    $session_id = $this->emojiReactionsManager->getUserSessionId();
     return $this->response($target, $id, $html_id);
   }
 
   /**
-   *
+   * Remove an emoji reaction.
    */
   public function remove($reaction_name, $target, $id, $html_id, $token) {
 
-     // Validate provided token.
-     if ($this->validateToken($token, $html_id)) {
+    // Validate provided token.
+    if ($this->validateToken($token, $html_id)) {
 
       // Load related entity.
       $entity_arr = explode(':', $target);
@@ -121,12 +120,12 @@ class EmojiReactionsController extends ControllerBase {
       // Use the event dispatcher service to notify any event subscribers.
       $this->eventDispatcher->dispatch(EmojiReactionEvents::REACT, $event);
     }
-    
+
     return $this->response($target, $id, $html_id);
   }
 
   /**
-   *
+   * Builds the ajax response for Emoji Reactions.
    */
   public function response($target, $id, $html_id) {
     $account = $this->currentUser();
@@ -137,10 +136,9 @@ class EmojiReactionsController extends ControllerBase {
 
     $response = new AjaxResponse();
     // TODO: Ajax response to update reactions count.
-
-
+    $alertCommand = new AlertCommand('Hola Mundo!!');
     // TODO: Ajax response for a toast message.
-    
+    $response->addCommand($alertCommand);
     return $response;
   }
 

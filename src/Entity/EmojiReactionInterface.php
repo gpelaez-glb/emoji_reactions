@@ -7,7 +7,7 @@ use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\user\EntityOwnerInterface;
 
 /**
- *
+ * Provides an interface for EmojiReaction entity type.
  */
 interface EmojiReactionInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 

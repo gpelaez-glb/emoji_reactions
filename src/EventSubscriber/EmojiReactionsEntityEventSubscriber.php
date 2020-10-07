@@ -4,6 +4,7 @@ namespace Drupal\emoji_reactions\EventSubscriber;
 
 use Drupal\Core\Entity\EntityTypeEvent;
 use Drupal\Core\Entity\EntityTypeEvents;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\emoji_reactions\Entity\EmojiReactionType;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -13,10 +14,17 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class EmojiReactionsEntityEventSubscriber implements EventSubscriberInterface {
 
   /**
+   * Drupal Messenger.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Constructs a new EmojiReactionsEntityEventSubscriber object.
    */
-  public function __construct() {
-
+  public function __construct(MessengerInterface $messenger) {
+    $this->messenger = $messenger;
   }
 
   /**
@@ -38,16 +46,15 @@ class EmojiReactionsEntityEventSubscriber implements EventSubscriberInterface {
     $entity_type = $event->getEntityType();
     if ($entity_type->id() == 'emoji_reaction_type') {
       $this->createDefaultReactionTypes();
-      \Drupal::messenger()->addMessage('Event EntityTypeEvents::CREATE thrown by Subscriber in module emoji_reactions.', 'status', TRUE);
-
+      $this->messenger->addMessage('Event EntityTypeEvents::CREATE thrown by Subscriber in module emoji_reactions.', 'status', TRUE);
     }
   }
 
   /**
-   *
+   * Creates the default Emoji Reaction Types.
    */
   private function createDefaultReactionTypes() {
-    foreach (EMOJI_REACTIONS_DEFAULTS as $reaction_name) {
+    foreach (EmojiReactionType::EMOJI_REACTIONS_DEFAULTS as $reaction_name) {
       $reaction_type = EmojiReactionType::create([
         'name' => $reaction_name,
         'use_animated_icon' => TRUE,

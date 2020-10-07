@@ -146,7 +146,8 @@ class EmojiReaction extends ContentEntityBase implements EmojiReactionInterface 
    * {@inheritdoc}
    */
   public function getType() {
-    $reaction_type_id = $this->get('reaction_type_id')->value;
+    $reaction_type_id = $this->get('reaction_type_id')->getValue()[0]['target_id'];
+
     /** @var EmojiReactionType $reaction_type */
     return $this->entityTypeManager()
       ->getStorage('emoji_reaction_type')
@@ -161,7 +162,7 @@ class EmojiReaction extends ContentEntityBase implements EmojiReactionInterface 
     if (empty($type)) {
       return '';
     }
-    return $this->get('name')->value;
+    return $type->get('name')->value;
   }
 
   /**
@@ -176,10 +177,8 @@ class EmojiReaction extends ContentEntityBase implements EmojiReactionInterface 
 
     if (empty($type_ids)) {
       throw new InvalidArgumentException(
-        t('Invalid reaction type name: "%type_name"', [
-          '%type_name' => $type_name,
-        ]
-      ));
+        'Invalid reaction type name: ' . $type_name,
+      );
     }
     $this->set('reaction_type_id', reset($type_ids));
     return $this;

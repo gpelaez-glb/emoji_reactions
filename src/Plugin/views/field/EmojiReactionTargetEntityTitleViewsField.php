@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @ingroup views_field_handlers
  *
- * @ViewsField("reaction_target_entity_title_views_field")
+ * @ViewsField("reactions_target_entity_title_views_field")
  */
 class EmojiReactionTargetEntityTitleViewsField extends FieldPluginBase {
 
@@ -83,6 +83,7 @@ class EmojiReactionTargetEntityTitleViewsField extends FieldPluginBase {
       return '';
     }
 
+    /** @var \Drupal\emoji_reactions\Entity\EmojiReaction $entity */
     $entity = $values->_entity;
     $entity_target_type = $entity->getTargetEntityType();
     $entity_target_id = $entity->getTargetEntityId();

@@ -6,6 +6,7 @@
  */
 
 use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Implements hook_install().
@@ -18,4 +19,21 @@ function emoji_reactions_install() {
   $config
     ->set('token_seed', Crypt::randomBytesBase64())
     ->save();
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function emoji_reactions_update_8003(&$sandbox) {
+  \Drupal::entityDefinitionUpdateManager()->needsUpdates();
+
+  $field_weight_definition = BaseFieldDefinition::create('integer')
+    ->setLabel(t('Weight'))
+    ->setDescription(t('Indicates the order of the emoji_reaction_types.'))
+    ->setDefaultValue(0);
+
+  $storage = \Drupal::entityTypeManager()->getStorage('emoji_reaction_type');
+  echo $storage->getEntityTypeId();
+  \Drupal::entityDefinitionUpdateManager()
+    ->installFieldStorageDefinition('weight', 'emoji_reaction_type', 'emoji_reaction_type', $field_weight_definition);
 }

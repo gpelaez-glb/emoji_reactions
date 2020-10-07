@@ -9,7 +9,7 @@
   margin: 0;
   padding: 0 10px;
   position: absolute;
-  background-color: #FFF;
+  background-color: #fff;
   border-radius: 15px;
   border: solid 1px #00846bc7;
   box-sizing: border-box;
@@ -46,9 +46,9 @@
   padding: 0;
 }
 
-.emoji-reactions > ul > li .emoji {
-  
-}
+/* .emoji-reactions > ul > li .emoji {
+
+} */
 
 .emoji-reaction--count {
   display: none;
@@ -68,4 +68,22 @@
   padding: 0;
   float: left;
   box-sizing: border-box;
+}
+
+.emoji-reactions__stats {
+  margin-bottom: 10px;
+}
+.emoji-reactions__stats--icons {
+  margin-right: 7px;
+}
+.emoji-reactions__stats--icons .emoji-shrink.emoji-wrapper {
+  float: left;
+  width: 24px;
+  height: 24px;
+  margin: 0 0 0 -5px;
+}
+.emoji-reactions__stats--icons .emoji-shrink.emoji-wrapper .emoji {
+  transform: scale3d(0.2, 0.2, 0.2);
+  top: -48px;
+  left: -48px;
 }

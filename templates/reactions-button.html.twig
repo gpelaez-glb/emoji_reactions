@@ -4,14 +4,19 @@
   ]
 %}
 <div{{ attributes.addClass(classes) }}>
-  {% if reactions %}
-  <a class="react-button dropdown-toggle">
-    Add reaction
-  </a>
-  <ul class="dropdown-menu">
-  {% for reaction in reactions %}
-    <li> {{ reaction }} </li>
-  {% endfor %}
-  </ul>
+
+  {% if button %}
+    {{button}}
+  {% else %}  
+    {% if reactions %}
+    <a class="react-button dropdown-toggle">
+      Add reaction
+    </a>
+    <ul class="dropdown-menu">
+    {% for reaction in reactions %}
+      <li> {{ reaction }} </li>
+    {% endfor %}
+    </ul>
+    {% endif %}
   {% endif %}
 </div>

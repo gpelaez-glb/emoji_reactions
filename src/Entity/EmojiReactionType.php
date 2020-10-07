@@ -4,7 +4,6 @@ namespace Drupal\emoji_reactions\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 
@@ -30,21 +29,25 @@ use Drupal\Core\Field\BaseFieldDefinition;
  */
 class EmojiReactionType extends ContentEntityBase {
 
+  const EMOJI_REACTIONS_ANGRY = 'angry';
+  const EMOJI_REACTIONS_HAHA = 'haha';
+  const EMOJI_REACTIONS_LIKE = 'like';
+  const EMOJI_REACTIONS_LOVE = 'love';
+  const EMOJI_REACTIONS_SAD = 'sad';
+  const EMOJI_REACTIONS_WOW = 'wow';
+  const EMOJI_REACTIONS_YAY = 'yay';
+
+  const EMOJI_REACTIONS_DEFAULTS = [
+    self::EMOJI_REACTIONS_LIKE,
+    self::EMOJI_REACTIONS_LOVE,
+    self::EMOJI_REACTIONS_YAY,
+    self::EMOJI_REACTIONS_HAHA,
+    self::EMOJI_REACTIONS_WOW,
+    self::EMOJI_REACTIONS_SAD,
+    self::EMOJI_REACTIONS_ANGRY,
+  ];
+
   use EntityChangedTrait;
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct(array $values, $entity_type, $bundle = FALSE, $translations = []) {
-    parent::__construct($values, $entity_type, $bundle, $translations);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
-    parent::preCreate($storage_controller, $values);
-  }
 
   /**
    * {@inheritdoc}
@@ -103,6 +106,12 @@ class EmojiReactionType extends ContentEntityBase {
       ->setLabel(t('ID'))
       ->setDescription(t('The ID of the EmojiReactionType entity.'))
       ->setReadOnly(TRUE);
+
+    $fields['weight'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Weight'))
+      ->setDescription(t('The sorting weight of the EmojiReactionType entity.'))
+      ->setDefaultValue(0);
+
     $fields['uuid'] = BaseFieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
       ->setDescription(t('The UUID of the EmojiReactionType entity.'))
@@ -135,9 +144,9 @@ class EmojiReactionType extends ContentEntityBase {
       ->setLabel(t('Reaction type animated icon.'))
       ->setDescription(t('The reaction type animated icon.'))
       ->setSettings([
-        'allowed_values' => array_combine(EMOJI_REACTIONS_DEFAULTS, EMOJI_REACTIONS_DEFAULTS),
+        'allowed_values' => array_combine(self::EMOJI_REACTIONS_DEFAULTS, self::EMOJI_REACTIONS_DEFAULTS),
       ])
-      ->setDefaultValue(EMOJI_REACTIONS_DEFAULTS[0])
+      ->setDefaultValue(self::EMOJI_REACTIONS_DEFAULTS[0])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',

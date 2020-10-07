@@ -8,11 +8,15 @@ services:
   emoji_reactions.manager:
     class: Drupal\emoji_reactions\Service\EmojiReactionsManager
     arguments: 
+      - '@config.factory'
+      - '@request_stack'
       - '@current_user'
+      - '@database'
       - '@entity_type.manager'
       - '@emoji_reactions.csrf_token'
   emoji_reactions.entity_type_event_subscriber:
     class: Drupal\emoji_reactions\EventSubscriber\EmojiReactionsEntityEventSubscriber
-    arguments: []
+    arguments:
+      - '@messenger'
     tags:
       - { name: event_subscriber }

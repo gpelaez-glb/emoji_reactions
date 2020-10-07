@@ -31,8 +31,38 @@ class LoadTest extends BrowserTestBase {
    */
   protected function setUp() {
     parent::setUp();
-    $this->user = $this->drupalCreateUser(['administer site configuration']);
+
+    // Log in a new user to react, remove and view reactions.
+    $this->user = $this->drupalCreateUser([
+      'administer site configuration',
+      'emoji_reactions_react',
+      'emoji_reactions_remove',
+      'emoji_reactions_view',
+    ]);
     $this->drupalLogin($this->user);
+
+    $this->createTestContent();
+  }
+
+  /**
+   *
+   */
+  private function createTestContent() {
+    // Create an article content type that we will use for testing.
+    $article = $this->container->get('entity_type.manager')->getStorage('node_type')
+      ->create([
+        'type' => 'article',
+        'name' => 'Test Article',
+      ]);
+    $article->save();
+    $this->container->get('router.builder')->rebuild();
+  }
+
+  /**
+   *
+   */
+  public function testSetReactions() {
+
   }
 
   /**

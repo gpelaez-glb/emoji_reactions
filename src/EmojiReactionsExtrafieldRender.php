@@ -6,12 +6,14 @@ use Drupal\Core\Entity\EntityBase;
 use Drupal\extrafield_views_integration\lib\ExtrafieldRenderClassInterface;
 
 /**
- *
+ * Implement ExtrafieldRenderClassInterface.
  */
 class EmojiReactionsExtrafieldRender implements ExtrafieldRenderClassInterface {
 
   /**
-   * @inheritDoc
+   * Renders the emoji reactions component.
+   *
+   * {@inheritDoc}
    */
   public static function render(EntityBase $entity) {
     /** @var EmojiReactionsManager $emoji_reactions_manager */
