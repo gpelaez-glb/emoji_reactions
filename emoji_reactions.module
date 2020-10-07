@@ -76,19 +76,25 @@ function emoji_reactions_entity_view(&$build, $entity, $display, $view_mode) {
  */
 function emoji_reactions_theme() {
   $theme = [];
+  $theme['reactions'] = [
+    'variables' => [
+      'content' => [],
+      'attributes' => [],
+    ],
+  ];
   $theme['reactions_stats'] = [
     'variables' => [
       'icons' => [],
       'count' => [],
+      'attributes' => [],
     ],
-    'attributes' => [],
   ];
   $theme['reactions_button'] = [
     'variables' => [
       'button' => NULL,
       'reactions' => [],
+      'attributes' => [],
     ],
-    'attributes' => [],
   ];
   $theme['reaction_emoji'] = [
     'variables' => [
@@ -96,7 +102,7 @@ function emoji_reactions_theme() {
       'reaction' => '',
     ],
     'render element' => 'children',
-    '#attached' => [
+    'attached' => [
       'library' => [
         'emoji_reactions/emoji',
       ],
@@ -113,9 +119,9 @@ function emoji_reactions_theme() {
       'reaction' => '',
       'action' => '',
       'count' => '',
-    ],
-    'attributes' => [
-      'class' => ['emoji-reaction-wrapper'],
+      'attributes' => [
+        'class' => ['emoji-reaction-wrapper'],
+      ],
     ],
     'attached' => [
       'library' => [

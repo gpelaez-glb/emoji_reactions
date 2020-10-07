@@ -103,10 +103,13 @@ class EmojiReactionsManager {
      * [x] Get Reactions Stats.
      * [] Check if user reacted to the entity.
      */
+    $html_id = uniqid('em-reactions-' . $entity->id());
+    $html_id = Html::getId($html_id);
+
     $content = [];
 
     if (EmojiReactionsController::checkAccess('view', $this->account)) {
-      $content[] = $this->getStats($entity);
+      $content['stats'] = $this->getStats($entity);
     }
 
     // Initialize active type variable.
@@ -121,7 +124,7 @@ class EmojiReactionsManager {
       $current_reaction = $this->check($entity, NULL, $type);
       $action = $current_reaction == FALSE ? 'react' : 'remove';
       if (EmojiReactionsController::checkAccess($action, $this->account)) {
-        $button = $this->buildReactionLink($entity, $type, $action);
+        $button = $this->buildReactionLink($entity, $type, $html_id, $action);
         if ($current_reaction !== FALSE) {
           $active_button = $button;
         }
@@ -131,32 +134,55 @@ class EmojiReactionsManager {
       }
     }
 
-    $content[] = [
+    $content['reaction_button'] = [
       '#theme' => 'reactions_button',
       '#reactions' => $emoji_reactions,
       '#button' => $active_button,
     ];
 
-    return $content;
+    return [
+      '#theme' => 'reactions',
+      '#content' => $content,
+      '#attributes' => [
+        'id' => $html_id,
+      ],
+    ];
+  }
+
+  /**
+   * Gets a new csrf token for the element id.
+   *
+   * @param string $html_id
+   *   Dom element id.
+   *
+   * @return string
+   *   Generates a token based on $value, the token seed, and the private key.
+   */
+  public function getToken(string $html_id) {
+    return $this->csrfTokenGenerator->get($html_id);
   }
 
   /**
    * Builds the reaction button renderable array.
    */
-  public function buildReactionLink(EntityBase $entity, EmojiReactionType $reaction_type, $action = 'react') {
+  public function buildReactionLink(EntityBase $entity, EmojiReactionType $reaction_type, string $html_id, string $action = 'react') {
 
-    $title = $reaction_type->getReactionTypeIcon();
+    $title = [];
+    $title[] = $reaction_type->getReactionTypeIcon();
+    if ($action == 'remove') {
+      $title[] = [
+        '#markup' => "<span>Remove {$reaction_type->getName()} reaction.</span>",
+      ];
+    }
 
     $target = $entity->getEntityTypeId() . ':' . $entity->bundle();
-    $html_id = uniqid('em-reaction-' . $entity->id());
-    $html_id = Html::getId($html_id);
 
     $url = Url::fromRoute('emoji_reactions.' . $action, [
       'reaction_name' => $reaction_type->getName(),
       'target' => $target,
       'id' => $entity->id(),
       'html_id' => $html_id,
-      'token' => $this->csrfTokenGenerator->get($html_id),
+      'token' => $this->getToken($html_id),
     ]);
 
     $link = [
@@ -166,7 +192,6 @@ class EmojiReactionsManager {
     ];
     $link['#attributes']['title'] = $title;
     $link['#attributes']['class'] = ['use-ajax', 'emoji-reaction'];
-    $link['#attributes']['id'] = $html_id;
 
     if ($action == 'remove') {
       $link['#attributes']['class'][] = 'active';

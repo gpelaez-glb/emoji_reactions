@@ -1,0 +1,11 @@
+
+{%
+  set classes = [
+    'emoji-reactions',
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+  {% if content %}
+    {{ content }}
+  {% endif %}
+</div>

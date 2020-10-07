@@ -4,7 +4,9 @@ namespace Drupal\emoji_reactions\Controller;
 
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityBase;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\emoji_reactions\Event\EmojiReactionEvent;
 use Drupal\emoji_reactions\Event\EmojiReactionEvents;
@@ -88,13 +90,12 @@ class EmojiReactionsController extends ControllerBase {
       // Perform reaction.
       $reaction_entity = $this->emojiReactionsManager->setReaction($reaction_name, $entity);
 
-      $event = new EmojiReactionEvent($entity, $reaction_entity->getType(), $reaction_entity->getOwner());
-
       // Use the event dispatcher service to notify any event subscribers.
+      $event = new EmojiReactionEvent($entity, $reaction_entity->getType(), $reaction_entity->getOwner());
       $this->eventDispatcher->dispatch(EmojiReactionEvents::REACT, $event);
     }
 
-    return $this->response($target, $id, $html_id);
+    return $this->response($entity, $html_id);
   }
 
   /**
@@ -121,13 +122,13 @@ class EmojiReactionsController extends ControllerBase {
       $this->eventDispatcher->dispatch(EmojiReactionEvents::REACT, $event);
     }
 
-    return $this->response($target, $id, $html_id);
+    return $this->response($entity, $html_id);
   }
 
   /**
    * Builds the ajax response for Emoji Reactions.
    */
-  public function response($target, $id, $html_id) {
+  public function response(EntityBase $entity, $html_id) {
     $account = $this->currentUser();
     $session_id = $this->emojiReactionsManager->getUserSessionId();
     if ($account->isAnonymous() && !$this->emojiReactionsManager->getCookie()) {
@@ -135,10 +136,25 @@ class EmojiReactionsController extends ControllerBase {
     }
 
     $response = new AjaxResponse();
-    // TODO: Ajax response to update reactions count.
-    $alertCommand = new AlertCommand('Hola Mundo!!');
+    // Ajax response to update reactions count.
+    $element = $this->emojiReactionsManager->getLinksByEntity($entity);
+    $link_id = '#' . $html_id;
+    $new_html_id = $element['#attributes']['id'];
+    $new_token = $this->emojiReactionsManager->getToken($new_html_id);
+    // Update csrf token and target html_id.
+    if (isset($element['#content']['reaction_button']['#reactions'])) {
+      foreach ($element['#content']['reaction_button']['#reactions'] as $key => $value) {
+        $element['#content']['reaction_button']['#reactions'][$key]['#content']['link']['#url']->setRouteParameter('html_id', $new_html_id);
+        $element['#content']['reaction_button']['#reactions'][$key]['#content']['link']['#url']->setRouteParameter('token', $new_token);
+      }
+    }
+    if (isset($element['#content']['reaction_button']['#button'])) {
+      $element['#content']['reaction_button']['#button']['#content']['link']['#url']->setRouteParameter('html_id', $new_html_id);
+      $element['#content']['reaction_button']['#button']['#content']['link']['#url']->setRouteParameter('token', $new_token);
+    }
+    $replace_command = new ReplaceCommand($link_id, render($element));
+    $response->addCommand($replace_command);
     // TODO: Ajax response for a toast message.
-    $response->addCommand($alertCommand);
     return $response;
   }
 
