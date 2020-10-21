@@ -1,0 +1,8 @@
+{
+  "name": "gpelaez-glb/emoji_reactions",
+  "description": "Emoji Reactions.",
+  "type": "drupal-custom-module",
+  "license": "GPL-2.0+",
+  "minimum-stability": "dev",
+  "require": {}
+}
