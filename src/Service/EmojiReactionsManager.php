@@ -3,6 +3,7 @@
 namespace Drupal\emoji_reactions\Service;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Entity\EntityBase;
@@ -140,12 +141,24 @@ class EmojiReactionsManager {
       '#button' => $active_button,
     ];
 
+    $cache_tag = 'reactions_' . $entity->getEntityTypeId() . '_' . $entity->bundle() . '_' . $entity->id();
+    
     return [
       '#theme' => 'reactions',
       '#content' => $content,
       '#attributes' => [
         'id' => $html_id,
       ],
+      '#cache' => [
+        'contexts' => [ 
+          // The "current user" is used above, which depends on the request, 
+          // so we tell Drupal to vary by the 'user' cache context.
+          'user', 
+        ],
+        'tags' => [
+          $cache_tag,
+        ],
+      ], 
     ];
   }
 
@@ -426,6 +439,10 @@ class EmojiReactionsManager {
       $reaction->save();
     }
 
+    // Invalidate entity reaction cache tag.
+    $cache_tag = 'reactions_' . $entity->getEntityTypeId() . '_' . $entity->bundle() . '_' . $entity->id();
+    Cache::invalidateTags([$cache_tag]);
+
     return $reaction;
 
   }
@@ -455,6 +472,11 @@ class EmojiReactionsManager {
     if ($reaction !== FALSE) {
       $reaction->delete();
     }
+
+    // Invalidate entity reaction cache tag.
+    $cache_tag = 'reactions_' . $entity->getEntityTypeId() . '_' . $entity->bundle() . '_' . $entity->id();
+    Cache::invalidateTags([$cache_tag]);
+
     return $reaction;
   }
 

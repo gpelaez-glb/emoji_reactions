@@ -186,14 +186,12 @@ function emoji_reactions_query_substitutions(ViewExecutable $view) {
  * Implements hook_preprocess_HOOK().
  */
 function emoji_reactions_preprocess_reaction_link(&$variables) {
-  // dpm($variables);
+
 }
 
 /**
  * Implements hook_preprocess_HOOK().
  */
 function emoji_reactions_preprocess_reaction_emoji(&$variables) {
-  // dpm($variables);
-  // die();
   $variables['#attached']['library'][] = 'emoji_reactions/emoji';
 }

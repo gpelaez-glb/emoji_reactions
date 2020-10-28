@@ -12,8 +12,8 @@ use Drupal\emoji_reactions\Event\EmojiReactionEvent;
 use Drupal\emoji_reactions\Event\EmojiReactionEvents;
 use Drupal\emoji_reactions\Service\EmojiReactionsManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Undocumented class.
