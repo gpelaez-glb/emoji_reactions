@@ -142,7 +142,7 @@ class EmojiReactionsManager {
     ];
 
     $cache_tag = 'reactions_' . $entity->getEntityTypeId() . '_' . $entity->bundle() . '_' . $entity->id();
-    
+
     return [
       '#theme' => 'reactions',
       '#content' => $content,
@@ -150,15 +150,15 @@ class EmojiReactionsManager {
         'id' => $html_id,
       ],
       '#cache' => [
-        'contexts' => [ 
-          // The "current user" is used above, which depends on the request, 
+        'contexts' => [
+          // The "current user" is used above, which depends on the request,
           // so we tell Drupal to vary by the 'user' cache context.
-          'user', 
+          'user',
         ],
         'tags' => [
           $cache_tag,
         ],
-      ], 
+      ],
     ];
   }
 

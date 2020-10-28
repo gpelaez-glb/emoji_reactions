@@ -1,0 +1,5 @@
+services:
+  emoji_reactions_snackbars.routing:
+    class: Drupal\emoji_reactions_snackbars\Routing\RouteSubscriber
+    tags:
+      - { name: event_subscriber }

@@ -1,0 +1,12 @@
+snackbar_library:
+  css:
+    theme:
+      assets/snackbar/snackbar.min.css: {}
+  js:
+    assets/snackbar/snackbar.min.js: {}
+snackbars:
+  js:
+    assets/js/emoji_reactions_snackbars.js: {}
+  dependencies:
+    - emoji_reactions_snackbars/snackbar_library
+    - core/drupal.ajax
